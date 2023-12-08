@@ -8,28 +8,37 @@ VOC_COLORMAP = [[0, 0, 0], [0, 0, 128], [0, 128, 0], [0, 128, 128], [128, 0, 0],
                 [0, 192, 0], [0, 192, 128], [128, 64, 0]
                 ]
 
-def load_semantic_seg_data(img_path, gt_path, img_size):
-     # --- load image
+def load_semantic_seg_data(img_path, gt_path, canny_path ,img_size):
+    # --- load image
     img_names = os.listdir(img_path)
     gt_names = os.listdir(gt_path)
+    ce_names = os.listdir(canny_path)
 
     img_names = sorted(img_names, key=lambda x: int(''.join(filter(str.isdigit, x))))
     gt_names = sorted(gt_names, key=lambda x: int(''.join(filter(str.isdigit, x))))
-    print(img_names[:10])
-    print(gt_names[:10])
+    ce_names = sorted(ce_names, key=lambda x: int(''.join(filter(str.isdigit, x))))
+    
     imgs = np.zeros((len(img_names), img_size, img_size, 3), dtype=np.uint8) # [B, H, W, C]
+    ces = np.zeros((len(ce_names), img_size, img_size, 3), dtype=np.uint8) # [B, H, W, C]
     gts = np.zeros((len(gt_names), img_size, img_size, 3), dtype=np.uint8) # [B, H, W, C]
 
     for it in range(len(img_names)):
-        print('%d / %d' %(it, len(img_names)))
+        print('img loading : %d / %d' %(it, len(img_names)))
 
         img = cv2.imread(img_path + img_names[it])
         img = cv2.resize(img, (img_size, img_size))
         imgs[it, :, :, :] = img
 
+    for it in range(len(ce_names)):
+        print('ce loading : %d / %d' %(it, len(ce_names)))
+
+        ce = cv2.imread(canny_path + ce_names[it])
+        ce = cv2.resize(ce, (img_size, img_size))
+        ces[it,:,:,:] = ce
+
     # ------- gt!!!
     for it in range(len(gt_names)):
-        print('%d / %d' %(it, len(gt_names)))
+        print('gt loading : %d / %d' %(it, len(gt_names)))
         gt = cv2.imread(gt_path + gt_names[it])
         gt_index = np.zeros(shape=(gt.shape[0], gt.shape[1], 3), dtype=np.uint8)
         for ic in range(len(VOC_COLORMAP)):
@@ -39,7 +48,9 @@ def load_semantic_seg_data(img_path, gt_path, img_size):
 
         gt_index = cv2.resize(gt_index, (img_size, img_size), interpolation=cv2.INTER_NEAREST)
         gts[it, :, :, :] = gt_index
-
+    
+    imgs = imgs + ces
+    print("merge success")
 
     return imgs, gts
 
@@ -60,25 +71,26 @@ def Mini_batch_training_seg(train_img, train_gt, batch_size, img_size):
     return batch_img, batch_gt
 
 def canny_edge_detection(input_folder, output_folder):
-    # 결과물을 저장할 폴더 생성
+
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    # 입력 폴더에서 이미지 파일들을 가져오기
+    # load images from folder i choose
     image_files = [f for f in os.listdir(input_folder) if f.endswith(('.jpg', '.jpeg', '.png', '.bmp'))]
 
     for image_file in image_files:
-        # 이미지 불러오기
+        # --- load image
         input_path = os.path.join(input_folder, image_file)
-        image = cv2.imread(input_path, cv2.IMREAD_GRAYSCALE)
+        image = cv2.imread(input_path)
 
         if image is not None:
-            # 캐니 에지 추출
-            edges = cv2.Canny(image, 200, 300)
+            gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # extract canny edge
+            edges = cv2.Canny(gray_image, 200, 300)
 
-            # 결과물 저장
-            output_path = os.path.join(output_folder, f"canny_{image_file}")
+            # save result
+            output_path = os.path.join(output_folder, f"{image_file}")
             cv2.imwrite(output_path, edges)
-            print(f"Processed: {image_file} -> Saved as: canny_{image_file}")
+            print(f"Processed: {image_file} -> Saved as: {image_file}")
         else:
             print(f"Error loading image: {image_file}")

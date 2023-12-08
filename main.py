@@ -16,8 +16,8 @@ image_save_path = '/Users/euntaeklee/torch_env/torch_class/FCN_CE/seg_result/'
 path = "/Users/euntaeklee/torch_env/torch_class/data/VOC_dataset/"
 
 print('load_image....')
-train_img, train_gt = load_semantic_seg_data(path + 'train/train_img/', path + 'train/train_gt/', img_size=img_size)
-test_img, test_gt = load_semantic_seg_data(path + 'test/test_img/', path + 'test/test_gt/', img_size=img_size)
+train_img, train_gt = load_semantic_seg_data(path + 'train/train_img/', path + 'train/train_gt/', path + 'train/train_ce/', img_size=img_size)
+test_img, test_gt = load_semantic_seg_data(path + 'test/test_img/', path + 'test/test_gt/', path + 'test/test_ce/', img_size=img_size)
 
 print('load_image_finish')
 
