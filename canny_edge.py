@@ -7,3 +7,4 @@ input_test_folder = "/Users/euntaeklee/torch_env/torch_class/data/VOC_dataset/te
 output_test_folder = "/Users/euntaeklee/torch_env/torch_class/data/VOC_dataset/test/test_ce"
 
 canny_edge_detection(input_train_folder, output_train_folder)
+canny_edge_detection(input_test_folder, output_test_folder)
