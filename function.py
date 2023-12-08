@@ -58,3 +58,27 @@ def Mini_batch_training_seg(train_img, train_gt, batch_size, img_size):
         batch_gt[it] = train_gt[temp, :, :, 0:1]
 
     return batch_img, batch_gt
+
+def canny_edge_detection(input_folder, output_folder):
+    # 결과물을 저장할 폴더 생성
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # 입력 폴더에서 이미지 파일들을 가져오기
+    image_files = [f for f in os.listdir(input_folder) if f.endswith(('.jpg', '.jpeg', '.png', '.bmp'))]
+
+    for image_file in image_files:
+        # 이미지 불러오기
+        input_path = os.path.join(input_folder, image_file)
+        image = cv2.imread(input_path, cv2.IMREAD_GRAYSCALE)
+
+        if image is not None:
+            # 캐니 에지 추출
+            edges = cv2.Canny(image, 200, 300)
+
+            # 결과물 저장
+            output_path = os.path.join(output_folder, f"canny_{image_file}")
+            cv2.imwrite(output_path, edges)
+            print(f"Processed: {image_file} -> Saved as: canny_{image_file}")
+        else:
+            print(f"Error loading image: {image_file}")
