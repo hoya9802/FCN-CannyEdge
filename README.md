@@ -1,1 +1,1 @@
-# FCN_CE
+# FCN_CE(Fully Convolutional Network with Canny Edge)
