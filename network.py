@@ -19,7 +19,7 @@ class FCN_8S(nn.Module):
         super(FCN_8S, self).__init__()
         # self.conv_ch = conv_ch
         # [B, C, H, W]
-        self.vgg16_part1 = nn.Sequential( # img: [B, 3, 224, 224]
+        self.vgg16_part1 = nn.Sequential( # img: [B, 6, 224, 224]
             conv_bn_relu(3, 64),    # [B, 64, 224, 224]
             conv_bn_relu(64, 64),   # [B, 64, 224, 224]
             nn.MaxPool2d(kernel_size=2, stride=2), # [B, 64, 112, 112]

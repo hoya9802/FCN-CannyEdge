@@ -49,8 +49,14 @@ def load_semantic_seg_data(img_path, gt_path, canny_path ,img_size):
         gt_index = cv2.resize(gt_index, (img_size, img_size), interpolation=cv2.INTER_NEAREST)
         gts[it, :, :, :] = gt_index
     
-    imgs = imgs + ces
-    print("merge success")
+    print('img shape: ', imgs.shape)
+    print('ce shape: ', ces.shape)
+    print('gt shape: ', gts.shape)
+
+    imgs = np.maximum(imgs, ces)
+
+    print('after img shape: ', imgs.shape)
+    
 
     return imgs, gts
 
@@ -86,7 +92,7 @@ def canny_edge_detection(input_folder, output_folder):
         if image is not None:
             gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             # extract canny edge
-            edges = cv2.Canny(gray_image, 200, 300)
+            edges = cv2.Canny(gray_image, 350, 400) # 200, 300
 
             # save result
             output_path = os.path.join(output_folder, f"{image_file}")
