@@ -24,7 +24,7 @@ print('load_image_finish')
 
 train_loss_history = []
 
-model = FCN_8S(num_class).to(Device)
+model = FCRN_8S(num_class).to(Device)
 
 
 learning_rate = 0.01
