@@ -23,6 +23,7 @@ test_img, test_gt = load_semantic_seg_data(path + 'test/test_img/', path + 'test
 print('load_image_finish')
 
 train_loss_history = []
+mean_iou_history = []
 
 model = FCRN_8S(num_class).to(Device)
 
@@ -57,12 +58,18 @@ for it in range(num_iter):
     train_loss = torch.nn.functional.cross_entropy(pred, gt_tensor.type(torch.float32))
     train_loss.backward()
     optimizer.step()
+    with torch.no_grad():
+        model.eval()
+        pred_np = np.argmax(pred.cpu().numpy(), axis=1)
+        mean_iou = compute_mean_iou(pred_np, batch_gt, num_class)
+        mean_iou_history.append(mean_iou)
+
 
     if it % 100 == 0:
         consum_time = time.time() - start_time
         train_loss_history.append(train_loss.item())
-        print('iter: %d   train loss: %.5f   lr: %.5f   time: %.4f'
-              %(it, train_loss.item(), optimizer.param_groups[0]['lr'], consum_time))
+        print('iter: %d   train loss: %.5f MeanIOU: %.5f  lr: %.5f   time: %.4f'
+              %(it, train_loss.item(), mean_iou, optimizer.param_groups[0]['lr'], consum_time))
         model.eval()
         start_time = time.time()
 
@@ -104,10 +111,12 @@ for it in range(num_iter):
 
 
 plt.figure(figsize=(12, 5))
-plt.plot(train_loss_history)
-plt.title('Training Set Loss Over Epochs')
+plt.plot(train_loss_history, label='Training Loss')
+plt.plot(mean_iou_history, label='Mean IOU')
+plt.title('Training Set Loss and Mean IOU Over Iterations')
 plt.xlabel('Epoch')
-plt.ylabel('Loss')
+plt.ylabel('Loss/MIOU')
+plt.legend()
 
 plt.savefig('FCN_CE/train_loss.png')
 plt.show()
