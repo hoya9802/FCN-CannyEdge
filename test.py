@@ -11,8 +11,8 @@ def get_image_dimensions(image_path):
     return img, dimensions
 
 # 이미지 파일 경로 지정
-ce_path = '/Users/euntaeklee/torch_env/torch_class/data/VOC_dataset/train/train_ce/2010 _002139.jpg'
-img_path = '/Users/euntaeklee/torch_env/torch_class/data/VOC_dataset/train/train_img/2010_002139.jpg'
+ce_path = '/Users/euntaeklee/torch_env/torch_class/data/VOC_dataset/train/train_ce/2007_005702.jpg'
+img_path = '/Users/euntaeklee/torch_env/torch_class/data/VOC_dataset/train/train_img/2007_005702.jpg'
 
 # 이미지 차원 확인
 ce, ce_dimensions = get_image_dimensions(ce_path)

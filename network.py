@@ -111,6 +111,72 @@ class FCRN_8S(nn.Module):
         self.conv = nn.Conv2d(3, 64, kernel_size=(7, 7), padding=3, stride=(2, 2)) # [112, 112]
         self.bn = nn.BatchNorm2d(64)
         self.ReLU = nn.ReLU()
+        # self.maxp = nn.MaxPool2d(kernel_size=2, stride=2) # [56, 56]
+
+        self.resnet34_part1 = nn.Sequential( # img: [B, 6, 112, 112]
+            ResBlock(64, 64),
+            ResBlock(64, 64),
+            ResBlock(64, 64),
+            ResBlock(64, 128),
+            nn.MaxPool2d(kernel_size=2, stride=2),   # [56, 56]
+            ResBlock(128, 128),
+            ResBlock(128, 128),
+            ResBlock(128, 128),
+            ResBlock(128, 256),
+            nn.MaxPool2d(kernel_size=2, stride=2), # [28, 28]     should be # # [B, 256, 28, 28]
+        )
+
+        self.resnet34_part2 = nn.Sequential(
+            ResBlock(256, 256),
+            ResBlock(256, 256),
+            ResBlock(256, 256),
+            ResBlock(256, 256),
+            ResBlock(256, 256),                           
+            ResBlock(256, 512),
+            nn.MaxPool2d(kernel_size=2, stride=2),  # [14, 14]    # should be # [B, 512, 14, 14]
+        )
+
+        self.resnet34_part3 = nn.Sequential(
+            ResBlock(512, 512),
+            ResBlock(512, 512),                
+            nn.AvgPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(512, num_class, kernel_size=(1, 1)) # [7, 7]    # should be # [B, 512, 7, 7]
+        )
+        
+
+        self.pred_part1 = nn.Conv2d(256, num_class, kernel_size=(1, 1))
+        self.pred_part2 = nn.Conv2d(512, num_class, kernel_size=(1, 1))
+    
+        self.up_p3 = nn.ConvTranspose2d(num_class, num_class, kernel_size=4, stride=2, padding=1)
+        self.up_p2 = nn.ConvTranspose2d(num_class, num_class, kernel_size=4, stride=2, padding=1)
+        self.up_p1 = nn.ConvTranspose2d(num_class, num_class, kernel_size=16, stride=8, padding=4)
+    
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        x = self.ReLU(x)
+
+        x = self.resnet34_part1(x)
+        x_p1 = self.pred_part1(x)
+
+        x = self.resnet34_part2(x)
+        x_p2 = self.pred_part2(x)
+
+        x = self.resnet34_part3(x)
+        x = self.up_p3(x) + x_p2
+        x = self.up_p2(x) + x_p1
+        x = self.up_p1(x)
+
+        return x
+
+class DFCRN_8S(nn.Module):
+    def __init__(self, num_class):
+        super(DFCRN_8S, self).__init__()
+        # self.conv_ch = conv_ch
+        # [B, C, H, W]
+        self.conv = nn.Conv2d(3, 64, kernel_size=(7, 7), padding=3, stride=(2, 2)) # [112, 112]
+        self.bn = nn.BatchNorm2d(64)
+        self.ReLU = nn.ReLU()
         self.maxp = nn.MaxPool2d(kernel_size=2, stride=2) # [56, 56]
 
         self.resnet34_part1 = nn.Sequential( # img: [B, 6, 112, 112]
