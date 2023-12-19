@@ -4,39 +4,48 @@ from network import *
 import time
 import matplotlib.pyplot as plt
 
-Device = torch.device("mps")
+os.environ['CUDA_VISIBLE_DEVICES'] = "5"
+Device = "cuda" if torch.cuda.is_available() else 'cpu'
 print(Device)
 
 num_class = 21
 batch_size = 16
 img_size = 224
 
-model_save_path = '/Users/euntaeklee/torch_env/torch_class/FCN_CE/model/'
-image_save_path = '/Users/euntaeklee/torch_env/torch_class/FCN_CE/seg_result/'
-path = "/Users/euntaeklee/torch_env/torch_class/data/VOC_dataset/"
+# Path
+model_save_path = '/home/hoya9802/PycharmProjects/pythonProject/torchenv/FCRN/DFCRN_model/'
+image_save_path = '/home/hoya9802/PycharmProjects/pythonProject/torchenv/FCRN/DFCRN_seg_result/'
+path = "/home/hoya9802/Downloads/VOC_dataset/"
 
 print('load_image....')
-train_img, train_gt = load_semantic_seg_data(path + 'train/train_img/', path + 'train/train_gt/', path + 'train/train_ce/', img_size=img_size)
-test_img, test_gt = load_semantic_seg_data(path + 'test/test_img/', path + 'test/test_gt/', path + 'test/test_ce/', img_size=img_size)
 
+# Without CannyEdge
+train_img, train_gt = load_semantic_seg_data(path + 'train/train_img/', path + 'train/train_gt/', img_size=img_size)
+test_img, test_gt = load_semantic_seg_data(path + 'test/test_img/', path + 'test/test_gt/', img_size=img_size)
+
+# With CannyEdge
+# train_img, train_gt = load_semantic_seg_data_canny(path + 'train/train_img/', path + 'train/train_gt/', path + 'train/train_ce/', img_size=img_size)
+# test_img, test_gt = load_semantic_seg_data_canny(path + 'test/test_img/', path + 'test/test_gt/', path + 'test/test_ce/', img_size=img_size)
 
 print('load_image_finish')
 
 train_loss_history = []
 mean_iou_history = []
 
-model = FCRN_8S(num_class).to(Device)
-
+# Models
+model = FCN_8S(num_class).to(Device)
+# model = FCRN_8S(num_class).to(Device)
+# model = DFCRN_8S(num_class).to(Device)
 
 learning_rate = 0.01
-num_iter = 300000
+num_iter = 150000
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=5e-4, momentum=0.9)
 
 start_time = time.time()
 for it in range(num_iter):
-    if it >= 100000 and it < 200000:
+    if it >= 90000 and it < 120000:
         optimizer.param_groups[0]['lr'] = 0.001
-    if it >= 200000:
+    if it >= 120000:
         optimizer.param_groups[0]['lr'] = 0.0001
 
     # batch_img = [B, 224, 224, 3] / batch_gt = [B, 224, 224, 1]
@@ -46,16 +55,15 @@ for it in range(num_iter):
     # ---- training step
     model.train()
     optimizer.zero_grad()
-    pred = model(torch.from_numpy(batch_img.astype(np.float32)).to(Device)) # [batch, 10] = [64, 10]
-    
+    pred = model(torch.from_numpy(batch_img.astype(np.float32)).to(Device))  # [batch, 10] = [64, 10]
+
+    # Depending on Pytorch Version
     gt_tensor = torch.tensor(batch_gt, dtype=torch.long).to(Device)
-    gt_tensor = torch.nn.functional.one_hot(gt_tensor, num_class).squeeze()
-    gt_tensor = torch.permute(gt_tensor, (0, 3, 1, 2)) # np.transpose랑 같다.
+    # gt_tensor = torch.nn.functional.one_hot(gt_tensor, num_class).squeeze()
+    # gt_tensor = torch.permute(gt_tensor, (0, 3, 1, 2))  # np.transpose랑 같다.
+    gt_tensor = gt_tensor[:,:,:,0]
 
-    # 만약 pytorch version이 낮아서 torch.permute을 one_hot()이후 지원하지 않으면 아래 코드를 위 2개 코드 대신 사용!
-    # gt_tensor = gt_tensor[:,:,:,0]
-
-    train_loss = torch.nn.functional.cross_entropy(pred, gt_tensor.type(torch.float32))
+    train_loss = torch.nn.functional.cross_entropy(pred, gt_tensor)
     train_loss.backward()
     optimizer.step()
     with torch.no_grad():
@@ -64,16 +72,15 @@ for it in range(num_iter):
         mean_iou = compute_mean_iou(pred_np, batch_gt, num_class)
         mean_iou_history.append(mean_iou)
 
-
     if it % 100 == 0:
         consum_time = time.time() - start_time
         train_loss_history.append(train_loss.item())
         print('iter: %d   train loss: %.5f MeanIOU: %.5f  lr: %.5f   time: %.4f'
-              %(it, train_loss.item(), mean_iou, optimizer.param_groups[0]['lr'], consum_time))
+              % (it, train_loss.item(), mean_iou, optimizer.param_groups[0]['lr'], consum_time))
         model.eval()
         start_time = time.time()
 
-    if it % 10000 == 0: # and it != 0
+    if it % 10000 == 0:  # and it != 0
         print('SAVING MODEL')
         if not os.path.isdir(model_save_path):
             os.makedirs(model_save_path)
@@ -102,21 +109,18 @@ for it in range(num_iter):
             big_paper[:, :img_size, :] = test_img[itest:itest + 1, :, :, :]
             big_paper[:, img_size:, :] = test_save
 
-            temp = image_save_path + '%d/' %it
+            temp = image_save_path + '%d/' % it
             if not os.path.isdir(temp):
                 os.makedirs(temp)
 
-            cv2.imwrite(temp + '%d.png' %(itest), big_paper)
-        
-
+            cv2.imwrite(temp + '%d.png' % (itest), big_paper)
 
 plt.figure(figsize=(12, 5))
-plt.plot(train_loss_history, label='Training Loss')
-plt.plot(mean_iou_history, label='Mean IOU')
-plt.title('Training Set Loss and Mean IOU Over Iterations')
+plt.plot(train_loss_history)
+plt.title('Training Set Loss Over Epochs')
 plt.xlabel('Epoch')
-plt.ylabel('Loss/MIOU')
-plt.legend()
+plt.ylabel('Loss')
 
-plt.savefig('FCN_CE/train_loss.png')
+# path of train_loss
+plt.savefig('/home/hoya9802/PycharmProjects/pythonProject/torchenv/FCRN/train_loss.png')
 plt.show()

@@ -13,7 +13,7 @@ def compute_mean_iou(pred, target, num_classes):
         pred_cls = (pred == cls)
         target_cls = (target == cls)
 
-        intersection = np.logical_and(pred_cls, target_cls).sum() 
+        intersection = np.logical_and(pred_cls, target_cls).sum()
         union = np.logical_or(pred_cls, target_cls).sum()
         iou = intersection / (union + 1e-10)
         if iou > 0.0:
@@ -47,19 +47,27 @@ def evaluate_model(model, test_img, test_gt, img_size, num_classes):
         mIOU_list.append(mIOU)
 
     average_mIOU = np.mean(mIOU_list)
-    
+
     return average_mIOU
 
-model_path = "/Users/euntaeklee/Downloads/fcnce_model/model_140000.pt"
+# Path
+model_path = "/home/hoya9802/PycharmProjects/pythonProject/torchenv/FCRN/DFCRN_model/model_40000.pt"
+path = "/home/hoya9802/Downloads/VOC_dataset/"
+
+# models
 model = FCN_8S(num_class)
+# model = FCRN_8S(num_class)
+# model = DFCRN_8S(num_class)
+
 model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 model.eval()
 
+# Without Canny Edge
+test_img, test_gt = load_semantic_seg_data(path + 'test/test_img/', path + 'test/test_gt/', img_size=img_size)
 
-path = "/Users/euntaeklee/torch_env/torch_class/data/VOC_dataset/"
-test_img, test_gt = load_semantic_seg_data(path + 'test/test_img/', path + 'test/test_gt/', path + 'test/test_ce/', img_size=img_size)
-
+# With Canny Edge
+# test_img, test_gt = load_semantic_seg_data_canny(path + 'test/test_img/', path + 'test/test_gt/', path + 'test/test_ce/', img_size=img_size)
 
 average_mIOU = evaluate_model(model, test_img, test_gt, img_size, num_class)
 
-print("FCN_CE Mean IOU on the test dataset: {:.4f}".format(average_mIOU))
+print("Mean IOU on the test dataset: {:.4f}".format(average_mIOU))
