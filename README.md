@@ -39,7 +39,7 @@ However, we found that traditional neural networks struggle to differentiate col
 
 **Illustration of the Problem**<br>
 
-[그림1]
+![그림1](https://github.com/user-attachments/assets/5516ffc3-8262-45ed-9416-00cd39ae364d)
 
 In the example images shown above, the two images are distinctly different. However, when a convolution operation is performed with a filter initialized with weights of 1, the resulting feature maps for both images are identical, producing a value of 255 x 9.
 
@@ -48,28 +48,31 @@ This indicates that the network relies entirely on the loss function to learn an
 Proposed Solution
 To address the aforementioned issues, we utilized the Canny Edge Detection algorithm, which is known for its ability to effectively detect edges. We applied the Canny Edge algorithm to the input images and combined the resulting edge maps with the original images by taking the maximum value at each pixel. This preprocessing step was applied to all images.
 
-[그림2]
+![그림2](https://github.com/user-attachments/assets/6782ebf2-e39d-4a32-aea5-0a3d788cb5a9)
 
 The image on the right shows a combination of the left image and its Canny edge map, created using the following formula:
 
 Equation:
 
-
 By applying convolution operations to the processed image, we observed that the values corresponding to the edges were amplified, highlighting the edge regions more effectively.
 
 **Results**
 
-[그림3]
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/1ac66cc1-9682-464d-94d3-0a63e1761158" alt="이미지 설명" width="771">
+</p>
+
 
 As shown in the results, the original image remains largely intact, while the edge regions are distinctly amplified and highlighted in white. This demonstrates that our preprocessing method effectively enhances the edges without significantly altering the original image.
 
-**Unexpected Outcomes**<br>
+**Unexpected Outcomes**
 
-[그림4]
-
+<p align="center">
+ <img width="796" alt="스크린샷 2025-01-09 오전 1 20 06" src="https://github.com/user-attachments/assets/25f54a13-2eea-48e6-8cb3-b7a6d0e77c14" />
+</p>
 Contrary to our expectations, the model's performance did not show significant improvement after incorporating edge-enhanced preprocessing. We hypothesized that providing both edge and color information during the feed-forward process would lead to faster saturation in the early stages of training. However, even after 50,000 epochs (see Figure 2), there was no substantial difference observed.
 
-Additionally, the model's accuracy showed no notable improvement. In fact, there was a slight decrease in accuracy compared to the baseline (see Table 2).
+Additionally, the model's accuracy showed no notable improvement. In fact, there was a slight decrease in accuracy compared to the baseline (see Table 1).
 
 Based on these findings, all subsequent experiments were conducted using the original images without Canny Edge preprocessing.
 
