@@ -29,6 +29,8 @@ All of these tuned structures are based on [FCN_8s](https://arxiv.org/pdf/1411.4
  - FCRN_8s : ResNet34 + FCN Decoding structure (ResNet34 is slightly modified for Existing FCN Decoding process)
  - DFCRN_8s : ResNet34 + tuned FCN Decoding structure
 
+## 한국어 버전은 해당 [파일](https://github.com/user-attachments/files/18361384/DFCRN.pdf)을 확인해 보세요.
+
 
 ## 1. Edge Amplification
 
@@ -52,7 +54,8 @@ To address the aforementioned issues, we utilized the Canny Edge Detection algor
 
 The image on the right shows a combination of the left image and its Canny edge map, created using the following formula:
 
-Equation:
+**Equation:**<br>
+$y = \max(I_{hwc}, E_{hwc}), \quad 1 \leq c \leq 3$
 
 By applying convolution operations to the processed image, we observed that the values corresponding to the edges were amplified, highlighting the edge regions more effectively.
 
