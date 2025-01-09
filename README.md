@@ -70,6 +70,7 @@ As shown in the results, the original image remains largely intact, while the ed
 <p align="center">
  <img width="796" alt="스크린샷 2025-01-09 오전 1 20 06" src="https://github.com/user-attachments/assets/25f54a13-2eea-48e6-8cb3-b7a6d0e77c14" />
 </p>
+
 Contrary to our expectations, the model's performance did not show significant improvement after incorporating edge-enhanced preprocessing. We hypothesized that providing both edge and color information during the feed-forward process would lead to faster saturation in the early stages of training. However, even after 50,000 epochs (see Figure 2), there was no substantial difference observed.
 
 Additionally, the model's accuracy showed no notable improvement. In fact, there was a slight decrease in accuracy compared to the baseline (see Table 1).
@@ -79,13 +80,17 @@ Based on these findings, all subsequent experiments were conducted using the ori
 ## 2. FCRN(Fully Convolutional ResNet)
 **Limitations of the Baseline FCN Model**<br>
 
-[그림5]
+<p align="center">
+ <img width="477" alt="스크린샷 2025-01-09 오전 11 46 10" src="https://github.com/user-attachments/assets/bc2adb73-be00-415d-9b02-562d711ab48c" />
+</p>
 
 In the original Fully Convolutional Network (FCN) paper, the FCN model was built upon the VGG16 architecture. Consequently, the early layers utilized 3x3 filters. While the VOC dataset contains 21 classes, the VGG16 model compresses the feature maps from 4096 dimensions to 21 in the final layer. This compression process inevitably results in significant information loss (see Figure 3).
 
 **Advantages of Using ResNet34**
 
-[그림6]
+<p align="center">
+ <img width="846" alt="스크린샷 2025-01-09 오후 12 11 15" src="https://github.com/user-attachments/assets/4871eaa8-bb16-4d68-a960-246938c76899" />
+</p>
 
 By using ResNet34, we gain several benefits. First, the network uses a 7x7 filter in the initial layer, allowing it to capture more coarse information compared to VGG16. Additionally, ResNet34 outperforms VGG16 in terms of classification performance. The model also reduces the dimensionality from 4096 to 21 in the final layer, whereas ResNet34 reduces it from 512 to 21, which helps preserve more information and reduces information loss (see Figure 4).
 
@@ -93,7 +98,9 @@ To ensure the number of channels added during skip connections aligns, we remove
 
 **Results**
 
-[그림7]
+<p align="center">
+ <img width="626" alt="스크린샷 2025-01-09 오후 12 14 47" src="https://github.com/user-attachments/assets/5a08e868-78cc-4694-b3d7-8c909aa3c2fd" />
+</p>
 
 The results show that FCRN_8s outperforms FCN_8s in predicting and displaying more accurate results for single objects. However, when it comes to multiple objects, FCRN_8s does not provide significantly better results, indicating the need for a different structural approach to handle multiple object scenarios more effectively.
 
@@ -101,15 +108,15 @@ The results show that FCRN_8s outperforms FCN_8s in predicting and displaying mo
 
 **FCN Skip Connection Strategy**
 
-[그림8]
-
 In the FCN model, skip connections occur once at 14x14 and again at 28x28 during the decoding process, after which they are merged. According to the original paper, skip connections at sizes larger than 28x28 did not significantly improve the model's performance, which is why the model was limited to processing up to 28x28.
 
 To improve the model's performance, we sought to modify the existing skip connection structure.
 
 **Modification of Transposed Convolution with Matrix Multiplication**
 
-[그림9]
+<p align="center">
+ <img width="614" alt="스크린샷 2025-01-09 오후 12 16 31" src="https://github.com/user-attachments/assets/8f474078-92e5-4ebf-ac95-9fdd20d0a204" />
+</p>
 
 By replacing the traditional transposed convolution with matrix multiplication, we hypothesized that without skip connections, the model would naturally learn based on the relative positions of neighboring coordinates during training. As a result, we believed that both transposed convolution and bilinear interpolation would produce similar outcomes.
 
@@ -117,7 +124,9 @@ To address this, we proposed that the features from the encoding process, which 
 
 **Modification of Skip Connection Strategy**
 
-[그림10]
+<p align="center">
+ <img width="515" alt="스크린샷 2025-01-09 오후 12 57 53" src="https://github.com/user-attachments/assets/e6330607-633e-45ea-92d1-190780c6a774" />
+</p>
 
 The original model connected feature maps of the same size from the encoding and decoding processes, specifically linking the 14x14 and 28x28 feature maps directly. We rethought this approach by down-sampling the feature maps from the earlier layers of the network to match the sizes of the target feature maps (14x14 and 28x28). These down-sampled feature maps were then added to the skip connections (see Figure 6).
 
@@ -125,7 +134,9 @@ This modification was expected to allow the transposed convolutions in the decod
 
 **Results**
 
-[그림11]
+<p align="center">
+ <img width="622" alt="스크린샷 2025-01-09 오후 12 58 35" src="https://github.com/user-attachments/assets/39a4644d-903e-4f1e-a21f-93cbc05a3a94" />
+</p>
 
 As shown in the results, the modified model was able to capture more detailed information compared to the previous models. It also demonstrated better performance in handling multiple objects. Furthermore, we observed an increase in the mean Intersection over Union (mean IU) compared to previous models, indicating an improvement in overall model performance.
 
